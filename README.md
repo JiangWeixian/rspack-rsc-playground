@@ -9,7 +9,11 @@ pnpm dev
 open http://localhost:8000
 ```
 
+## RFC
+
+
+
 ## TODOs
 
-- [ ] Merge `RSCClientEntryPlugin` & `RSCServerReferenceManifestRspackPlugin`
-- [ ] Builtin `rsc-client-entry-loader` & `rsc-client-proxy-loader`
+- [x] Merge `RSCClientEntryPlugin` & `RSCServerReferenceManifestRspackPlugin`
+- [x] Builtin `rsc-client-entry-loader` & `rsc-client-proxy-loader`
