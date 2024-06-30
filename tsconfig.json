@@ -4,7 +4,8 @@
     "target": "ESNext",
     "jsx": "react-jsx",
     "moduleResolution": "node",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "module": "ES2020"
   },
   "includes": ["src"]
 }

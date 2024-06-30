@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "packageManager": "pnpm@9.3.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "pnpm esno ./scripts/dev.ts"
@@ -26,9 +27,9 @@
     "react-server-dom-webpack": "18.3.0-canary-587ae49d7-20230720"
   },
   "dependencies": {
-    "@rspack/core": "0.6.2-canary-022627f-20240514030437",
-    "@rspack/dev-server": "0.5.5",
-    "@rspack/plugin-react-refresh": "0.5.5",
+    "@rspack/core": "0.7.3-canary-e3de538-20240625072228",
+    "@rspack/dev-server": "0.7.3",
+    "@rspack/plugin-react-refresh": "0.7.3",
     "koa": "^2.15.3",
     "lodash-es": "^4.17.21",
     "react": "18.3.0-canary-587ae49d7-20230720",

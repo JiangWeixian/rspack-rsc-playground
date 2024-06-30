@@ -1,8 +1,11 @@
 import rspack from "@rspack/core";
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { Configuration } from '@rspack/core'
 import nodeExternals from 'webpack-node-externals'
+import common from './common.config'
 
-const isDev = process.env.NODE_ENV === "development";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const config: Configuration = {
   devtool: 'source-map',
@@ -13,12 +16,13 @@ const config: Configuration = {
     'server-entry': './src/server-entry.tsx'
   },
 	resolve: {
-		extensions: ["...", ".ts", ".tsx", ".jsx"]
+		extensions: ["...", ".ts", ".tsx", ".jsx"],
+		alias: common.alias,
 	},
   output: {
     filename: '[name].js',
     chunkFilename: 'chunks/[name].js',
-    path: './dist/server',
+    path: path.resolve(process.cwd(), './dist/server'),
     publicPath: '/',
     libraryTarget: 'commonjs2',
   },
@@ -67,9 +71,8 @@ const config: Configuration = {
 		]
 	},
 	experiments: {
-		rspackFuture: {
-			newTreeshaking: true,
-		},
+		css: true,
+    rsc: true,
 	},
   optimization: {
     minimize: false,
@@ -78,8 +81,7 @@ const config: Configuration = {
     usedExports: false,
   },
   plugins: [
-    new rspack.RSCClientEntryPlugin({}),
-    new rspack.RSCServerReferenceManifestRspackPlugin(),
+    new rspack.RSCClientEntryRspackPlugin({}),
   ],
 }
 

@@ -161,6 +161,7 @@ function RSCComponent(props: any): JSX.Element {
 }
 
 const renderer = (RootComponent: any, container: any, options = {}) => {
+  console.log(document.getElementById('root'))
   startTransition(() => {
     hydrateRoot(
       container,
@@ -173,6 +174,7 @@ const renderer = (RootComponent: any, container: any, options = {}) => {
     )
   })
 }
+
 
 // Default render
 renderer(<RSCComponent />, document.getElementById('root'))

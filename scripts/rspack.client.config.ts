@@ -1,11 +1,12 @@
 import rspack from "@rspack/core";
-import refreshPlugin from '@rspack/plugin-react-refresh'
 import path from 'node:path'
+import refreshPlugin from '@rspack/plugin-react-refresh'
 import type { Configuration } from '@rspack/core'
+import { fileURLToPath } from 'node:url'
+import common from './common.config'
 
 const isDev = process.env.NODE_ENV === "development";
-const RSC_CLIENT_ENTRY_LOADER = 'rsc-client-entry-loader'
-
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const config: Configuration = {
 	devtool: "source-map",
 	name: 'client',
@@ -14,12 +15,13 @@ const config: Configuration = {
 		'client-entry': "./src/client-entry.tsx"
 	},
 	resolve: {
-		extensions: ["...", ".ts", ".tsx", ".jsx"]
+		extensions: ["...", ".ts", ".tsx", ".jsx"],
+		alias: common.alias
 	},
 	output: {
     filename: '[name].js',
     chunkFilename: 'chunks/[name].js',
-    path: './dist/client',
+    path: path.resolve(process.cwd(), './dist/client'),
     publicPath: '/',
   },
 	devServer: {
@@ -79,21 +81,6 @@ const config: Configuration = {
 					}
 				]
 			},
-			{
-        // refs: https://webpack.js.org/loaders/babel-loader/#exclude-libraries-that-should-not-be-transpiled
-        test: [
-          /\.(j|t|mj|cj)sx?$/i,
-        ],
-        exclude: {
-          // Exclude libraries in node_modules ...
-          and: [/node_modules/],
-        },
-        use: [
-          {
-            loader: RSC_CLIENT_ENTRY_LOADER,
-          },
-        ],
-      },
 		]
 	},
 	optimization: {
@@ -101,12 +88,13 @@ const config: Configuration = {
 		moduleIds: "named"
 	},
 	experiments: {
-		rspackFuture: {
-			newTreeshaking: true
-		}
+		css: true,
+    rsc: true,
 	},
 	plugins: [
-		new rspack.RSCClientReferenceManifestRspackPlugin(),
+		new rspack.RSCClientReferenceManifestRspackPlugin({
+			serverProxy: path.resolve(__dirname, './runtime/client-proxy.mjs')
+		}),
 		new rspack.DefinePlugin({
 			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV)
 		}),
@@ -116,11 +104,6 @@ const config: Configuration = {
 		}),
 		isDev ? new refreshPlugin() : null
 	].filter(Boolean),
-	resolveLoader: {
-    alias: {
-      [RSC_CLIENT_ENTRY_LOADER]: path.join(process.cwd(), 'scripts', 'loaders', 'rsc-client-entry-loader.cjs'),
-    },
-  },
 };
 
 export default config

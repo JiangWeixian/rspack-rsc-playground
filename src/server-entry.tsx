@@ -11,7 +11,6 @@ import {
 import { contextAsyncStorage } from './context-async-storage'
 import { bufferReadableStream } from './buffer-readable-string'
 import { htmlEscapeJsonString } from './parse-html'
-import { parseState } from './parse-state'
 
 import { App } from './App'
 import Document from './Document'
@@ -223,6 +222,7 @@ export function handleRequest(
         _resolve()
       },
       onShellError: (error: any) => {
+        console.error(error)
         _reject({ type: 'SHELL_ERROR', error })
       },
       onError: (error: any) => {
@@ -230,6 +230,7 @@ export function handleRequest(
           // When refresh page very quick, will throw this error, ignore it
           return
         }
+        console.error(error)
         _reject({ type: 'RENDER_ERROR', error })
       },
     })
@@ -254,11 +255,16 @@ export function handleRequest(
     return RSCFlightStream
   }
 
+  const action = async () => {
+    
+  }
+
   return {
     isRSCRequest: pathname === rscAPIPrefix,
     createRSCStream: () => contextAsyncStorage.run(ctx, () => createRSCStream()),
     render: (options?: RenderToPipeableStreamOptions) => contextAsyncStorage.run(ctx, () => render(options)),
     serialize: () => contextAsyncStorage.run(ctx, () => serialize()),
+    action: () => contextAsyncStorage.run(ctx, () => action()),
   }
 }
 

@@ -1,12 +1,15 @@
 import nodeExternals from 'webpack-node-externals'
+import common from './common.config'
+import rspack from "@rspack/core";
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { Configuration } from '@rspack/core'
 
-const isDev = process.env.NODE_ENV === "development";
-const RSC_CLIENT_PROXY_LOADER = 'rsc-client-proxy-loader'
 const REGEX_REACT_SERVER_DOM_WEBPACK = /react-server-dom-webpack/
 const REACT_FOR_SERVER_COMPONENT_PATH = 'node_modules/react/react.shared-subset.js'
 const REACT_FOR_SERVER_COMPONENT_ABSOLUTE_PATH = path.resolve(process.cwd(), REACT_FOR_SERVER_COMPONENT_PATH)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const config: Configuration = {
   devtool: 'source-map',
   name: 'rsc',
@@ -18,13 +21,14 @@ const config: Configuration = {
   output: {
     filename: '[name].js',
     chunkFilename: 'chunks/[name].js',
-    path: './dist/server/rsc',
+    path: path.resolve(process.cwd(), './dist/server/rsc'),
     publicPath: '/',
     libraryTarget: 'commonjs2',
   },
   resolve: {
     alias: {
       react: REACT_FOR_SERVER_COMPONENT_ABSOLUTE_PATH,
+      ...common.alias
     },
 		extensions: ["...", ".ts", ".tsx", ".jsx"]
   },
@@ -77,35 +81,23 @@ const config: Configuration = {
 					}
 				]
 			},
-      {
-        test: {
-          and: [
-            /\.(j|t|mj|cj)sx?$/i,
-          ],
-        },
-        exclude: {
-          // Exclude libraries in node_modules ...
-          and: [/node_modules/],
-        },
-        use: [
-          {
-            loader: RSC_CLIENT_PROXY_LOADER,
-          },
-        ],
-      },
     ],
   },
+  experiments: {
+		css: true,
+    rsc: true,
+	},
   optimization: {
     minimize: false,
     removeEmptyChunks: true,
     mangleExports: false,
     usedExports: false,
   },
-  resolveLoader: {
-    alias: {
-      [RSC_CLIENT_PROXY_LOADER]: path.join(process.cwd(), 'scripts', 'loaders', 'rsc-client-proxy-loader.cjs'),
-    },
-  },
+  plugins: [
+    new rspack.RSCProxyRspackPlugin({
+      clientProxy: path.resolve(__dirname, './runtime/client-proxy.mjs')
+    }),
+  ],
 }
 
 export default config
