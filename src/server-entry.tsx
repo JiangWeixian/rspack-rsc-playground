@@ -2,6 +2,7 @@ import { Suspense, use } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
 import { createFromReadableStream } from 'react-server-dom-webpack/client.edge'
 import { renderToReadableStream } from 'react-server-dom-webpack/server.browser'
+import { decodeReply } from 'react-server-dom-webpack/server.node'
 import {
   ReadableStream,
   TransformStream,
@@ -16,9 +17,15 @@ import { App } from './App'
 import Document from './Document'
 
 import type { RenderToPipeableStreamOptions } from 'react-dom/server'
+import { parseServerActionState } from './parse-state'
 
 const rscAPIPrefix = '/__rsc'
+const serverActionAPIPrefix = '/__server_action'
 type SSRContext = any
+
+declare global {
+  var __webpack_require__: any
+}
 
 /**
  * We're running in the Node.js runtime without access to `fetch`,
@@ -171,11 +178,14 @@ interface HandleRequestOptions {
    * @description Client refs manifest
    */
   manifest: Manifest
+  serverActionManifest: {
+    serverActions: Record<string, Record<string, { server: string }>>,
+  }
 }
 
 export function handleRequest(
   ctx: SSRContext,
-  { manifest }: HandleRequestOptions,
+  { manifest, serverActionManifest }: HandleRequestOptions,
 ) {
   const [pathname, search] = ctx.url.split('?')
 
@@ -212,6 +222,7 @@ export function handleRequest(
       _resolve = resolve
       _reject = reject
     })
+    ctx.status = 200
     const { pipe } = renderToPipeableStream(<Root />, {
       ...resolveRenderStreamOptions(ctx, options),
       onShellReady() {
@@ -256,7 +267,26 @@ export function handleRequest(
   }
 
   const action = async () => {
-    
+    const state = parseServerActionState({ pathname, search })
+    const actionId = state.action
+    const actionModId = serverActionManifest.serverActions?.[actionId]?.['server-entry']?.server
+    const serverActions = __webpack_require__(actionModId)?.default || __webpack_require__(actionModId)
+    if (!actionId || !serverActions?.[actionId]) {
+      ctx.status = 404
+      return
+    }
+    const handler = await serverActions[actionId]()
+    // TODO: koa-body
+    // const payload = await decodeReply(ctx.req.body ?? {})
+    // const result = await handler(...payload)
+    const result = await handler()
+    const RSCFlightStream = renderToReadableStream(
+      [result],
+      manifest.clientModules,
+    )
+    ctx.status = 200
+    await bufferReadableStream(RSCFlightStream.getReader(), ctx.res.write.bind(ctx.res))
+    ctx.res.end()
   }
 
   return {

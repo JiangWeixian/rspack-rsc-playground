@@ -17,17 +17,32 @@ const dev = async () => {
   const compiler = rspack.rspack([clientConfig, serverConfig, serverRSCConfig])
   const rspackServer = new RspackDevServer.RspackDevServer(clientConfig.devServer!, compiler)
   await rspackServer.start()
+  let _resolve
+  const p = new Promise(resolve => {
+    _resolve = resolve
+  })
+  compiler.hooks.done.tap('done', () => {
+    _resolve()
+  })
+  await p
   const app = new koa()
   app.use(
     staticCache(path.join(process.cwd(), './dist/client'), {
-      maxAge: 365 * 24 * 60 * 60
+      maxAge: 0
     })
   )
-  app.use(async (ctx) => {
-    const manifest = JSON.parse((await fs.readFile(path.join(process.cwd(), './dist/server/client-reference-manifest.json'))).toString('utf-8'))
+  app.use(async (ctx, next) => {
+    const ssrManifest = JSON.parse((await fs.readFile(path.join(process.cwd(), './dist/server/client-reference-manifest.json'))).toString('utf-8'))
+    const serverActionManifest = JSON.parse((await fs.readFile(path.join(process.cwd(), './dist/server/server-reference-manifest.json'))).toString('utf-8'))
 
-    const ssr = require(path.join(process.cwd(), './dist/server/server-entry.js')).handleRequest(ctx, { manifest })
-    const rsc = require(path.join(process.cwd(), './dist/server/rsc/server-entry.js')).handleRequest(ctx, { manifest })
+    const ssr = require(path.join(process.cwd(), './dist/server/server-entry.js')).handleRequest(ctx, { manifest: ssrManifest, serverActionManifest })
+    const rsc = require(path.join(process.cwd(), './dist/server/rsc/server-entry.js')).handleRequest(ctx, { manifest: ssrManifest, serverActionManifest })
+    if (ctx.path === '/__server_action') {
+      console.log('Invoke server action', ctx.path)
+      await rsc.action()
+      await next()
+      return
+    }
     ctx.RSCStream = rsc.createRSCStream()
     await ssr.render()
   })

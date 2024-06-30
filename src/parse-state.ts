@@ -32,3 +32,26 @@ export function parseState({ rscAPIPrefix = '/__rsc', ...params }: { pathname: s
     return {}
   }
 }
+
+export function parseServerActionState({ serverActionAPIPrefix = '/__server_action', ...params }: { pathname: string; search: string; serverActionAPIPrefix?: string }): any {
+  try {
+    const { pathname, search } = params
+    const searchParams = new URLSearchParams(search)
+    const stateParam = searchParams.get('state')
+    const state: Record<string, any>
+      = pathname === serverActionAPIPrefix
+        ? stateParam
+          ? parseJSON(decodeURIComponent(stateParam))
+          : {}
+        : {
+            pathname: decodeURIComponent(pathname),
+            search: decodeURIComponent(search),
+          }
+
+    return state
+  } catch (e) {
+    console.error(e)
+    // Do not throw to prevent unhandled errors
+    return {}
+  }
+}

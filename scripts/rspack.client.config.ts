@@ -93,7 +93,7 @@ const config: Configuration = {
 	},
 	plugins: [
 		new rspack.RSCClientReferenceManifestRspackPlugin({
-			serverProxy: path.resolve(__dirname, './runtime/client-proxy.mjs')
+			serverProxy: path.resolve(__dirname, './runtime/server-proxy.mjs')
 		}),
 		new rspack.DefinePlugin({
 			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV)

@@ -11,10 +11,19 @@ import {
   useState,
 } from 'react'
 import { hydrateRoot } from 'react-dom/client'
-import { createFromFetch, createFromReadableStream } from 'react-server-dom-webpack/client'
+import { createFromFetch, createFromReadableStream, encodeReply } from 'react-server-dom-webpack/client'
 
 const encoder = new TextEncoder()
 const rscAPIPrefix = '/__rsc'
+const serverActionAPIPrefix = '/__server_action'
+globalThis.__call_server = async (action: string, args: any[]) => {
+  const payload = await encodeReply(args)
+  const query = encodeURIComponent(JSON.stringify({ action }))
+  const url = `${serverActionAPIPrefix}?state=${query}`
+  const res = await createFromFetch(fetch(url, { method: 'POST', body: payload }))
+  const [actionResult] = res
+  return actionResult
+}
 interface RSCState {
   pathname: string
   search: string
@@ -161,7 +170,6 @@ function RSCComponent(props: any): JSX.Element {
 }
 
 const renderer = (RootComponent: any, container: any, options = {}) => {
-  console.log(document.getElementById('root'))
   startTransition(() => {
     hydrateRoot(
       container,
